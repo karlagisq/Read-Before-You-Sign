@@ -3,6 +3,7 @@ import { Connection } from "@solana/web3.js";
 import { parseTransaction, decodeInstructions, accountKeys } from "@/lib/decode";
 import { simulate } from "@/lib/simulate";
 import { assess } from "@/lib/risk";
+import { loadFlaggedAddresses } from "@/lib/registry";
 import { template, llm } from "@/lib/explain";
 import type { Report } from "@/lib/types";
 
@@ -22,9 +23,10 @@ export async function POST(req: NextRequest) {
     const connection = new Connection(RPC, "confirmed");
     const simulation = await simulate(connection, tx);
 
-    // TODO: load flagged addresses from the on-chain scam-registry program and
-    // pass them in here as a Set<string>.
-    const { flags, score, level } = assess(instructions, simulation);
+    // Community blocklist from the on-chain scam-registry (empty if
+    // REGISTRY_PROGRAM_ID isn't set or the registry can't be reached).
+    const flaggedAddresses = await loadFlaggedAddresses(connection);
+    const { flags, score, level } = assess(instructions, simulation, { flaggedAddresses });
 
     const partial = { feePayer, instructions, simulation, flags, score, level };
 

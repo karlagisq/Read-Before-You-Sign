@@ -95,7 +95,7 @@ export function assess(
   if (opts.flaggedAddresses?.size) {
     for (const ix of instructions) {
       for (const acc of [ix.programId, ...ix.accounts]) {
-        if (opts.flaggedAddresses.has(acc)) {
+        if (opts.flaggedAddresses.has(acc) && !flags.some((f) => f.id === `flagged-${acc}`)) {
           add({
             id: `flagged-${acc}`,
             severity: "danger",

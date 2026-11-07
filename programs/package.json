@@ -2,7 +2,8 @@
   "name": "scam-registry-workspace",
   "private": true,
   "scripts": {
-    "sample-tx": "ts-node scripts/make-sample-tx.ts"
+    "sample-tx": "ts-node scripts/make-sample-tx.ts",
+    "flag": "ts-node scripts/flag-address.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
