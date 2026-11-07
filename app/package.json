@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@solana/spl-token": "^0.4.9",
+    "@solana/wallet-adapter-base": "^0.9.28",
+    "@solana/wallet-adapter-react": "^0.15.40",
+    "@solana/wallet-adapter-react-ui": "^0.9.40",
     "@solana/web3.js": "^1.98.0",
     "buffer": "^6.0.3",
     "next": "^15.0.0",
@@ -25,5 +28,8 @@
   },
   "bin": {
     "rbys": "bin/rbys.mjs"
+  },
+  "overrides": {
+    "@types/react": "$@types/react"
   }
 }

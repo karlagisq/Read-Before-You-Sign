@@ -57,6 +57,35 @@ The **scam registry** (an Anchor program in `programs/`, deployed on devnet)
 stores one PDA per flagged address. The analyzer reads all entries with a
 single `getProgramAccounts` call.
 
+## Trade safely (Sandwich Guard) — in progress
+
+`/trade` protects trades **you** start, in three steps:
+
+1. **Connect & Risk** ✅ — connect Phantom/Solflare (read-only), or look up any
+   address, or use the demo wallet. Helius shows SOL + token balances with USD
+   values and readable recent activity. *Next: a 0–100 token risk score with
+   reasons (liquidity, price impact, mint/freeze authority, holder
+   concentration, volatility, pool age).*
+2. **Simulate** — Jupiter quote → expected out, minimum out, price impact, and
+   an estimate of what a sandwich could extract at your slippage.
+3. **Protect** — rebuild the swap with tight slippage, add a Jito tip, send it
+   as a private bundle, show before/after. Always a confirmation screen;
+   never auto-sign.
+
+```
+browser ──POST /api/portfolio──► Next.js server ──► Helius DAS getAssetsByOwner
+   (public address only)          (HELIUS_API_KEY,       + Enhanced Transactions
+                                   never sent to browser)
+```
+
+Env: `HELIUS_API_KEY` (free at dashboard.helius.dev; without it `/trade` runs
+on demo data), `HELIUS_CLUSTER` (`mainnet` default). The demo wallet and the
+`DEMOCAT` memecoin are randomly generated addresses that belong to nobody.
+
+**What it does not do:** it never asks for a seed phrase or private key, never
+holds funds, and doesn't build bots or touch anyone else's trades. Protection
+*reduces exposure*; it can't prevent every sandwich.
+
 ## Sandwich attacks
 
 A sandwich attack targets swaps. A bot spots your swap before it lands, buys

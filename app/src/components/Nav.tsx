@@ -13,6 +13,7 @@ export function ShieldIcon({ size = 18 }: { size?: number }) {
 
 const LINKS = [
   { href: "/", label: "Check" },
+  { href: "/trade", label: "Trade" },
   { href: "/demo", label: "Demo dApp" },
   { href: "/extension", label: "Extension" },
 ];
