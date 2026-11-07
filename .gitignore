@@ -18,3 +18,5 @@ test-ledger/
 # misc
 .DS_Store
 *.log
+*.tsbuildinfo
+next-env.d.ts
