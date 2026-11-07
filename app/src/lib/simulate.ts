@@ -72,7 +72,11 @@ export async function simulate(
   const delegateChanges: DelegateChange[] = [];
   const ownerChanges: OwnerChange[] = [];
 
-  (v.accounts ?? []).forEach((afterAcc, i) => {
+  // A failed simulation changes nothing, and the RPC sends no real post-state,
+  // so diffing would report fake losses. Only diff successful runs. (In a
+  // successful run a null entry means the account was closed, which IS real.)
+  const afterAccounts = v.err ? [] : v.accounts ?? [];
+  afterAccounts.forEach((afterAcc, i) => {
     const addr = watched[i].toBase58();
     const beforeAcc = before[i];
 
