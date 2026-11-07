@@ -3,6 +3,7 @@ name = "scam-registry"
 version = "0.1.0"
 description = "On-chain community blocklist for Read Before You Sign"
 edition = "2021"
+rust-version = "1.79"
 
 [lib]
 crate-type = ["cdylib", "lib"]
