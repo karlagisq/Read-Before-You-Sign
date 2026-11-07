@@ -1,0 +1,12 @@
+<svg width="409" height="104" viewBox="0 0 409 104" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="409" height="104" rx="18" fill="#111830"/>
+<path d="M56 28.6667L74.6667 35.2V51.0667C74.6667 63.2 66.2667 71.6 56 75.3333C45.7333 71.6 37.3333 63.2 37.3333 51.0667V35.2L56 28.6667Z" fill="url(#a)"/>
+<path d="M47.6 52L53.6667 58.0667L65.3333 45.4667" stroke="#070B1A" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="round"/>
+<text fill="#EEF1FF" xml:space="preserve" font-family="League Spartan" font-size="30" font-weight="bold"><tspan x="100" y="50.2">Read Before You Sign</tspan></text>
+<text fill="#8D97C4" xml:space="preserve" font-family="Roboto" font-size="14"><tspan x="100" y="71.7852">know what you sign, before you sign</tspan></text>
+<defs><linearGradient id="a" x1="37.3333" y1="28.6667" x2="82.8618" y2="65.0894" gradientUnits="userSpaceOnUse">
+<stop stop-color="#5EEAD4"/>
+<stop offset="0.45" stop-color="#38BDF8"/>
+<stop offset="1" stop-color="#8B5CF6"/>
+</linearGradient></defs>
+</svg>
