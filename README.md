@@ -189,6 +189,8 @@ Highest impact first:
   install guide), `src/cli.ts` the `rbys` command.
 - `programs/` — the Anchor workspace (Rust): `scam-registry`, plus scripts to
   flag addresses and generate sample transactions.
+- `design/` — theme tokens, the Figma link, and `apply-tokens.mjs` to push
+  color changes into the web app, extension and CLI. See `design/README.md`.
 
 ## Try the samples
 
@@ -208,6 +210,22 @@ a transaction it can't run.
 > These sample transactions are openly-labeled test fixtures built from
 > standard instructions. This project is strictly defensive: it detects
 > dangerous transactions, it does not create deceptive ones.
+
+## Privacy & security
+
+The extension is **advisory**: it can pause or reject a request, but it holds
+no keys, can't sign, and never changes a transaction. Your wallet still asks
+you to approve in its own popup.
+
+| Concern | How it's handled |
+| --- | --- |
+| Pending transactions leaking (a bot that sees your swap early can sandwich it) | The extension only sends transactions to an analyzer **on your own computer** (`localhost`). Remote URLs are refused in both the settings and the background worker. |
+| What the analyzer sends out | The transaction goes to the Solana RPC for simulation (same as your wallet's own preview). Use a trusted or private RPC via `SOLANA_RPC_URL` / `MAINNET_RPC_URL`. If you set an Anthropic key, only the **findings** (not the raw transaction) are sent for wording. Nothing is logged or stored. |
+| Websites abusing your local analyzer | `/api/explain` rejects cross-site browser requests (403). Only the app itself, the extension, and command-line tools can call it. |
+| A phishing page faking its identity | The panel shows the site's origin as Chrome reports it to the extension, not what the page claims. |
+| A page reading or clicking the panel | The panel lives in a closed shadow root in the extension's isolated world and only accepts real user clicks (`isTrusted`). On high risk, Continue stays locked until you tick a box. |
+| Stored data | Only three settings (on/off, default network, analyzer URL) in `chrome.storage`. No history, no keys. |
+| Supply chain | The extension has zero third-party dependencies and no remote code (Manifest V3 forbids it). Permissions: `storage` plus `localhost` only. |
 
 ## Limitations
 
