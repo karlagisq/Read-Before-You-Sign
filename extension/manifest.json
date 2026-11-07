@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Read Before You Sign",
+  "version": "0.1.0",
+  "description": "Shows what a Solana transaction really does before your wallet opens.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Read Before You Sign", "default_popup": "popup.html" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["bridge.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

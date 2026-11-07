@@ -15,15 +15,23 @@ seems to head that way, stop and keep it to detection only.
 
 ## How it works
 
-Entry points: `src/cli.ts` (the `rbys` terminal command, primary) and
-`src/app/api/explain/route.ts` (web UI). Both call `src/lib/analyze.ts`.
+Primary interface: the browser extension in `extension/`. `inject.js` (page
+world) wraps Wallet Standard + injected-provider signing methods; `bridge.js`
+(isolated world) shows the review panel in a closed shadow root and only
+accepts trusted clicks; `background.js` POSTs to the app's `/api/explain`.
+The extension never modifies a transaction; it only pauses or rejects (4001).
+
+App entry points: `src/app/api/explain/route.ts` (used by the extension and
+web UI) and `src/cli.ts` (`rbys`). All call `src/lib/analyze.ts`.
+Web UI: `/` checker, `/demo` labeled demo dApp (samples in `src/lib/samples.ts`),
+`/extension` install guide. Theme tokens in `src/app/globals.css`.
 
 ```
 base64 tx → decode (static)     src/lib/decode.ts     (+ src/lib/swaps.ts: DEX slippage)
           → simulate (dry run)  src/lib/simulate.ts   (diffs accounts before/after)
           → risk rules          src/lib/risk.ts       (score + flags, DETERMINISTIC)
           → explain             src/lib/explain.ts    (LLM phrases the facts, or template)
-          → UI card             src/components/Report.tsx
+          → UI                  src/components/Report.tsx, extension/bridge.js
 ```
 
 The score and flags come only from `risk.ts`. The LLM receives the structured

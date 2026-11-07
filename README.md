@@ -1,42 +1,73 @@
 # Read Before You Sign
 
-**See what a Solana transaction actually does — before you approve it.**
+**See what a Solana transaction actually does — before your wallet opens.**
 
 Wallet pop-ups show you "Approve" and a couple of numbers. Scams hide the
 dangerous part where you can't see it: an instruction that quietly grants
-someone unlimited permission to spend your tokens, or hands over control of
-your account. This tool reads a transaction, dry-runs it against the network,
-and tells you in plain English what signing would really do.
+someone unlimited permission to spend your tokens, hands over control of your
+account, or a swap with loose slippage that invites sandwich bots. Read Before
+You Sign reads the transaction, dry-runs it on Solana, and tells you in plain
+English what signing would really do.
+
+It works where you already are: a **browser extension** steps in between any
+Solana site and your wallet (Phantom, Solflare, Backpack, any wallet-adapter
+site) and shows the review *before* the wallet popup. There's also a web
+checker and an `rbys` terminal command on the same engine.
 
 Built for the MLH Solana Hackathon (Nov 6–8, 2026), AI track.
 
+## What it's for
+
+| Who | Use |
+| --- | --- |
+| **Everyday wallet users** | Catch drainer sites: the fake "claim airdrop" or "mint" button whose transaction actually grants unlimited spending or hands over a token account. |
+| **Traders** | See your sandwich-attack exposure on every swap: "a bot can take up to 10% — you'd accept 135 instead of the quoted 150." Tighten slippage before signing. |
+| **New users** | Learn what transactions do in plain English, with the risky part highlighted, instead of trusting a pop-up. |
+| **dApp developers / QA** | Run your own transactions through the checker to see how a careful wallet user will read them; spot an accidental unlimited approval before shipping. |
+| **Teams & DAOs (multisig signers)** | Paste a proposed transaction and read it before co-signing. |
+| **Scripts & bots** | `rbys` exits `0/2/3` (ok / worth a look / high risk), so automation can refuse to send risky transactions. |
+| **The community** | The on-chain scam registry is a shared, auditable blocklist; every checker reads the same list straight from Solana. |
+
 ## How it works
 
-1. **Decode** the transaction's instructions (which programs, which accounts,
-   and for Jupiter/Raydium swaps, the slippage limit).
-2. **Simulate** it with Solana's `simulateTransaction` RPC and diff every
-   account's state before vs. after — so the findings reflect what the
-   transaction *really* does, not just what it claims.
-3. **Score the risk** with deterministic rules (unlimited approvals, ownership
-   handovers, sandwich-attack exposure, unknown programs, blocklisted addresses).
-4. **Explain** the findings in plain language. The risk score is fixed by the
-   rules; the AI only rewords the findings, it can't declare something safe.
+```
+site asks wallet to sign
+        │
+        ▼
+extension (inject.js) pauses the request ──► analyzer API  ─► decode instructions (+ swap slippage)
+        │                                                    ─► simulate on Solana, diff accounts before/after
+        │                                                    ─► read on-chain scam registry
+        │                                                    ─► deterministic risk rules → score + flags
+        │                                                    ─► AI rewords the findings (optional)
+        ▼
+review panel: Reject  /  Continue to wallet  ──► wallet popup opens only if you continue
+```
 
-An on-chain **scam registry** (an Anchor program, `programs/`) stores a
-community blocklist of flagged addresses that the detector checks against.
+1. **Decode** the instructions: which programs, which accounts, and for
+   Jupiter/Raydium swaps, the slippage limit.
+2. **Simulate** with Solana's `simulateTransaction` and diff every writable
+   account before vs. after, so findings reflect what the transaction *really*
+   does, not just what it claims.
+3. **Score** with deterministic rules: unlimited approvals, ownership
+   handovers, sandwich exposure, unknown programs, blocklisted addresses.
+4. **Explain** in plain language. The score is fixed by the rules; the AI only
+   rewords the findings and can't declare something safe.
+
+The **scam registry** (an Anchor program in `programs/`, deployed on devnet)
+stores one PDA per flagged address. The analyzer reads all entries with a
+single `getProgramAccounts` call.
 
 ## Sandwich attacks
 
 A sandwich attack targets swaps. A bot spots your swap before it lands, buys
 the same token just *before* you (pushing the price up), lets your swap fill at
-the worse price, then sells just *after* you and keeps the difference. On
-Solana there's no public mempool, but sandwiching still happens through
-bundles (e.g. Jito), cooperating validators, and RPCs that leak transactions.
+the worse price, then sells just *after* you and keeps the difference. Solana
+has no public mempool, but sandwiching still happens through bundles (e.g.
+Jito), cooperating validators, and RPCs that leak transactions.
 
 The bot can only take as much as your **slippage tolerance** allows: a swap
 signed with 10% slippage says "fill this even if the price is 10% worse."
-That number is written into the transaction, so Read Before You Sign reads it
-before you sign:
+That number is written into the transaction, so we read it before you sign:
 
 | Swap setting | Result |
 | --- | --- |
@@ -45,100 +76,150 @@ before you sign:
 | Slippage ≥ 5% | danger |
 | Minimum out = 0 / maximum in = unlimited | danger: "no price protection" |
 
-Each finding shows the actual numbers: *you'd accept as little as X tokens
-back instead of the quoted Y*.
-
 **What it does not do:** it can't see or block the bot. A sandwich happens
 after you sign, by someone else. The tool shows your maximum exposure so you
-can tighten slippage or send through an MEV-protected route before signing.
-Supported today: Jupiter v6 (`route`, `shared_accounts_route`, and the
-exact-out variants) and Raydium AMM v4. Other DEXes show as known programs
-without a slippage reading.
-
-## Use it in the terminal
-
-```bash
-cd app
-npm install
-npm link                     # installs the `rbys` command
-
-rbys <base64-transaction>    # or a bare message from `solana ... --dump-transaction-message`
-some-command | rbys          # reads stdin
-rbys --file tx.txt
-rbys -c mainnet <tx>         # simulate on mainnet (default: devnet)
-rbys --json <tx>             # machine-readable report
-```
-
-Exit codes: `0` looks okay, `2` worth a look, `3` high risk, `1` error. So
-you can gate a send in a script: `rbys "$TX" && <send it>`.
-
-It reads `app/.env.local` for `REGISTRY_PROGRAM_ID` and `ANTHROPIC_API_KEY`.
-The scam registry is always read from devnet (where it's deployed); set
-`REGISTRY_RPC_URL` to change that. The web UI (`npm run dev`) runs the
-same pipeline (`src/lib/analyze.ts`).
-
-## Project layout
-
-- `app/` — the detector (TypeScript): `rbys` terminal command (`src/cli.ts`)
-  and a Next.js web UI, both on the shared pipeline in `src/lib/`.
-- `programs/` — the Anchor workspace (Rust): `scam-registry`.
+can tighten slippage or use an MEV-protected send *before* signing.
+Supported: Jupiter v6 (`route`, `shared_accounts_route`, exact-out variants)
+and Raydium AMM v4.
 
 ## Quick start
 
 ```bash
-# the app
+# 1. the analyzer + web UI
 cd app
 npm install
-cp .env.example .env.local
-npm run dev            # http://localhost:3000, devnet by default
+cp .env.example .env.local      # set REGISTRY_PROGRAM_ID, optional ANTHROPIC_API_KEY
+npm run dev                     # http://localhost:3000
 
-# the Anchor program
+# 2. the extension (Chrome / Brave / Edge)
+#    chrome://extensions → Developer mode → Load unpacked → choose ./extension
+#    click the extension icon → pick Devnet → it should say "Connected"
+
+# 3. the Anchor program
 cd ../programs
 npm install
-anchor build
-anchor keys sync       # writes the real program ID
-anchor test            # localnet
+anchor build && anchor keys sync && anchor build && anchor test
+anchor deploy --provider.cluster devnet
 ```
 
-## Try it
+Then open **http://localhost:3000/demo**, choose **Use demo wallet** (keyless)
+or connect a devnet Phantom, and sign a sample.
+
+### Terminal (optional)
+
+```bash
+cd app && npm link              # installs `rbys`
+rbys <base64-tx>                # or pipe: some-command | rbys
+rbys -c mainnet --json <tx>
+```
+
+## Demo script (2 minutes)
+
+**0:00 — The problem (15s).** "Every Solana wallet popup asks you to trust a
+button. Drainer sites exploit that: the button says *Claim airdrop*, the
+transaction says *give this stranger unlimited access to your tokens*. And on
+swaps, loose slippage quietly hands money to sandwich bots."
+
+**0:15 — It's already there (25s).** Open the Demo dApp (it stands in for any
+Solana site). Click **Unlimited token approval**. *Before* the wallet opens,
+the Read Before You Sign panel appears: **High risk — Grants UNLIMITED
+spending of your tokens**, naming who gets access. Point out **Continue** is
+locked until you tick "I understand the risk." Click **Reject**: the site gets
+a normal "user rejected" error.
+
+**0:40 — Sandwich exposure (30s).** Click **Swap with 10% slippage**: "High
+swap slippage invites sandwich attacks — you'd accept as little as 135 instead
+of the quoted 150." Then **Swap with 0.5% slippage**: the most a bot could take
+is 0.5%. Say it precisely: *we don't stop the bot; we show your exposure
+before you sign, so you can fix it.*
+
+**1:10 — On-chain registry (25s).** Run `flag-address.ts` on the sample
+recipient (the Rust/Anchor program on devnet). Sign the transfer sample again:
+**"Touches an address on the community blocklist."** The list lives on
+Solana: shared, auditable, one PDA per address.
+
+**1:35 — Where the AI fits (15s).** "Detection is deterministic rules plus a
+real Solana simulation. The AI only turns those findings into plain English.
+It can't change the score or call something safe."
+
+**1:50 — Close (10s).** "Read Before You Sign: know what you sign, before you
+sign. Works with the wallet you already use."
+
+*Recording tips:* run the demo on devnet; record at 1280×800; keep the
+extension popup pinned so viewers see it's a real extension.
+
+## Features worth looking into next
+
+Highest impact first:
+
+1. **Approvals scanner + revoke.** List every token account in a wallet with
+   an active delegate (`getTokenAccountsByOwner`, check `delegate`), show who
+   can spend what, and offer a one-click `Revoke`. Catches damage that
+   already happened.
+2. **Address-lookup-table resolution.** Most Jupiter swaps use v0
+   transactions with ALTs; resolving them makes simulation diffs and registry
+   matches complete on real mainnet swaps.
+3. **Sign-message (SIWS) review.** Wallets also sign messages; phishing sites
+   use them for fake logins. Show the message and the domain it claims.
+4. **More DEX decoders.** Jupiter `route_v2`, Orca Whirlpools, Meteora,
+   Raydium CLMM/CPMM, and pump.fun bonding-curve buys (slippage there is
+   `max_sol_cost`).
+5. **Price-aware amounts.** Convert token units to dollars (Jupiter price API)
+   so "135000000 units" becomes "$13.50 at risk."
+6. **Open community reporting.** Let anyone submit a report PDA with a stake;
+   the authority (or a DAO vote) confirms. Today the registry is
+   authority-gated.
+7. **Domain checks.** Flag look-alike domains of popular dApps (punycode,
+   typosquats) next to the transaction review.
+8. **Token-2022 extensions.** Warn on permanent-delegate, transfer-hook, and
+   freeze-authority mints; these can take or lock tokens later.
+9. **Hosted analyzer + store listing.** Deploy the API (e.g. Vercel) with a
+   private RPC so the extension works without a local server, then publish
+   to the Chrome Web Store.
+10. **Mobile.** Wallet in-app browsers can't load extensions; a deep-link
+    "check this transaction" share target would cover them.
+
+## Project layout
+
+- `extension/` — the browser extension (Manifest V3): `inject.js` wraps the
+  wallet's signing methods, `bridge.js` shows the review panel,
+  `background.js` calls the analyzer, `popup.html` holds settings.
+- `app/` — analyzer + UI (TypeScript/Next.js): `src/lib/` is the engine,
+  `src/app/` the web UI (`/` checker, `/demo` demo dApp, `/extension`
+  install guide), `src/cli.ts` the `rbys` command.
+- `programs/` — the Anchor workspace (Rust): `scam-registry`, plus scripts to
+  flag addresses and generate sample transactions.
+
+## Try the samples
 
 ```bash
 cd programs
-npx ts-node scripts/make-sample-tx.ts approve-unlimited   # should flag HIGH
-npx ts-node scripts/make-sample-tx.ts safe-transfer       # see note below
+npx ts-node scripts/make-sample-tx.ts approve-unlimited | rbys     # HIGH
 npx ts-node scripts/make-sample-tx.ts swap-loose-slippage | rbys   # HIGH: 10% slippage
-npx ts-node scripts/make-sample-tx.ts swap-tight-slippage | rbys   # 0.5%: shows exposure only
+npx ts-node scripts/make-sample-tx.ts swap-tight-slippage | rbys   # exposure 0.5%
 npx ts-node scripts/make-sample-tx.ts swap-no-limit | rbys         # HIGH: min out = 0
+npx ts-node scripts/make-sample-tx.ts safe-transfer | rbys
 ```
 
-Pipe the output into `rbys`, or paste it into the web UI. The samples use
-placeholder accounts, so the simulation step fails on them and adds a
-"failed to simulate" warning (+20). That's honest: the tool can't verify a
-transaction it can't run.
+The samples use placeholder accounts, so the simulation step fails on them and
+adds a "failed to simulate" warning (+20). That's honest: the tool can't verify
+a transaction it can't run.
 
 > These sample transactions are openly-labeled test fixtures built from
-> standard SPL instructions. This project is strictly defensive: it detects
+> standard instructions. This project is strictly defensive: it detects
 > dangerous transactions, it does not create deceptive ones.
-
-## Demo script (2 min)
-
-1. Here's the problem: a wallet pop-up only shows "Approve". Show a scammy
-   approval request.
-2. Paste the same transaction into Read Before You Sign.
-3. It flags **"Grants UNLIMITED spending of your tokens"** and explains who
-   gets access to what.
-4. Paste a safe transfer — it comes back clean. No crying wolf.
-5. Sandwich risk: pipe `swap-loose-slippage` into `rbys`. It shows a bot
-   could take up to 10% and the exact token amount, then `swap-tight-slippage`
-   shows 0.5%. Say plainly: it doesn't stop the bot, it shows your exposure
-   before you sign.
-6. Mention the on-chain scam registry: the blocklist lives on Solana, so the
-   check is shared and auditable.
 
 ## Limitations
 
-Sandwich checks read the slippage a swap declares. They can't detect an
-actual sandwich (that happens after signing). Only Jupiter v6 and Raydium AMM
-v4 swaps are read so far. Address-lookup-table accounts aren't resolved yet (static keys only). The
-known-program list is short. Anchor instructions from unlisted programs show
-as "unknown program," which is an honest result, not a bug.
+- The extension wraps wallet methods in the page, as wallet-guard extensions
+  do. A site written specifically to evade this extension could bypass it;
+  it protects against everyday risky and phishing transactions. The review
+  panel itself sits in a closed shadow root and only accepts real clicks, so
+  a page can't read it or press Continue for you.
+- The analyzer runs locally (`localhost:3000`) for the hackathon; see
+  "Hosted analyzer" above.
+- Sandwich checks read the slippage a swap declares; they can't detect an
+  actual sandwich. Only Jupiter v6 and Raydium AMM v4 are decoded.
+- Address-lookup-table accounts aren't resolved (static keys only).
+- Instructions from unlisted programs show as "unknown program," which is an
+  honest result, not a bug.

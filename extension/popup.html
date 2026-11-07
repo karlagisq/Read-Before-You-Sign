@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; width: 300px; background: #111830; color: #eef1ff;
+    font: 13px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { padding: 16px; display: grid; gap: 12px; }
+  .head { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 14px; }
+  .mark { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: #06101f; font-weight: 900;
+    background: linear-gradient(135deg,#5eead4,#38bdf8 45%,#8b5cf6); }
+  label { display: grid; gap: 4px; color: #8d97c4; }
+  input[type=text], select { font: inherit; color: #eef1ff; background: #0b1124; border: 1px solid rgba(148,163,255,.2);
+    border-radius: 10px; padding: 8px 10px; }
+  .row { display: flex; justify-content: space-between; align-items: center; color: #eef1ff; }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 10px; cursor: pointer; color: #06101f;
+    background: linear-gradient(135deg,#5eead4,#38bdf8 45%,#8b5cf6); }
+  #status { font-size: 12px; color: #8d97c4; min-height: 1em; }
+  .ok { color: #34d399 !important; } .bad { color: #ff6b81 !important; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head"><div class="mark">✓</div>Read Before You Sign</div>
+    <div class="row"><span>Review every sign request</span><input id="enabled" type="checkbox"></div>
+    <label>Network when the site doesn't say
+      <select id="cluster"><option value="devnet">Devnet</option><option value="mainnet">Mainnet</option><option value="testnet">Testnet</option></select>
+    </label>
+    <label>Analyzer URL <input id="apiUrl" type="text" spellcheck="false"></label>
+    <button id="save">Save &amp; test connection</button>
+    <div id="status"></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
