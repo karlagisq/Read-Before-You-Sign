@@ -73,7 +73,7 @@
       const id = crypto.randomUUID();
       let acked = false;
       waiting.set(id, { ack: () => (acked = true), resolve });
-      postMessage({ [TAG]: "review", id, transactions, chain: chain || null, method, origin: location.origin }, "*");
+      postMessage({ [TAG]: "review", id, transactions, chain: chain || null, method }, "*");
       // If the extension isn't listening (disabled/reloaded), don't hang the site.
       setTimeout(() => {
         if (!acked) {

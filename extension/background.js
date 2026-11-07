@@ -10,6 +10,18 @@ function clusterFromChain(chain) {
   return m ? m[1] : null;
 }
 
+// Pending transactions are sensitive (a bot that sees your swap early can
+// sandwich it), so the extension only ever sends them to an analyzer on this
+// computer. Changing the setting to a remote URL is refused.
+function isLocal(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1");
+  } catch {
+    return false;
+  }
+}
+
 async function settings() {
   return { ...DEFAULTS, ...(await chrome.storage.sync.get(DEFAULTS)) };
 }
@@ -20,6 +32,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     const s = await settings();
     if (!s.enabled) return sendResponse({ enabled: false });
     const cluster = clusterFromChain(msg.chain) || s.cluster;
+    if (!isLocal(s.apiUrl)) {
+      return sendResponse({ enabled: true, error: "Analyzer URL must be on this computer (localhost). Fix it in the extension settings.", cluster });
+    }
     try {
       const res = await fetch(`${s.apiUrl.replace(/\/+$/, "")}/api/explain`, {
         method: "POST",

@@ -29,7 +29,8 @@
   }
 
   function reviewRequest(m) {
-    const ui = openPanel(m.origin, m.transactions.length);
+    // Use our own view of the page's origin. Never trust one the page sends us.
+    const ui = openPanel(location.origin, m.transactions.length);
     (async () => {
       const results = [];
       for (let i = 0; i < m.transactions.length && !ui.closed; i++) {

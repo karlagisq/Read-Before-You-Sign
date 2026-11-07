@@ -33,6 +33,16 @@ $("enabled").addEventListener("change", () => chrome.storage.sync.set({ enabled:
 $("cluster").addEventListener("change", () => chrome.storage.sync.set({ cluster: $("cluster").value }));
 $("save").addEventListener("click", async () => {
   const apiUrl = $("apiUrl").value.trim() || DEFAULTS.apiUrl;
+  let local = false;
+  try {
+    const u = new URL(apiUrl);
+    local = u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname);
+  } catch {}
+  if (!local) {
+    $("status").className = "bad";
+    $("status").textContent = "For your privacy the analyzer must run on this computer (http://localhost:…).";
+    return;
+  }
   await chrome.storage.sync.set({ apiUrl, enabled: $("enabled").checked, cluster: $("cluster").value });
   test(apiUrl);
 });
