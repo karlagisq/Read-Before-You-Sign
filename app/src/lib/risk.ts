@@ -39,6 +39,24 @@ export function assess(
     }
   }
 
+  // 1b. Approve seen in the decoded instructions. Catches approvals even when
+  // the simulation can't run (e.g. accounts that don't exist on this cluster).
+  // Skipped when the simulation diff above already flagged the same account.
+  for (const ix of instructions) {
+    if (ix.type !== "Approve") continue;
+    const acct = ix.details.tokenAccount;
+    if (flags.some((f) => f.id === `approve-${acct}`)) continue;
+    const unlimited = ix.details.amount === "UNLIMITED";
+    add({
+      id: `approve-${acct}`,
+      severity: "danger",
+      title: unlimited ? "Grants UNLIMITED spending of your tokens" : "Grants spending of your tokens",
+      detail: `Instruction ${ix.index + 1} lets ${shorten(ix.details.delegate)} move ${
+        unlimited ? "all" : ix.details.amount
+      } tokens out of ${shorten(acct)} without asking again.`,
+    });
+  }
+
   // 2. Ownership handover of a token account.
   for (const o of sim.ownerChanges) {
     add({

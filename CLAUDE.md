@@ -51,6 +51,13 @@ findings and rewords them; it must not change the verdict. Keep that split.
 
 ## Known gaps / TODOs (search the code for "TODO")
 
+- The sample fixtures use placeholder keys that don't exist on devnet, so the
+  simulation step always fails for them ("Transaction failed to simulate",
+  +20). `approve-unlimited` still scores HIGH (static Approve rule), but
+  `safe-transfer` scores MEDIUM instead of LOW. To make it clean, give
+  `make-sample-tx.ts` a devnet mode that creates a throwaway mint + token
+  accounts you own and builds the fixtures against those real accounts.
+
 - Address-lookup-table accounts aren't resolved in `decode.ts`/`simulate.ts`.
   Static keys only. Fine for the demo; note it as a limitation.
 - `KNOWN_PROGRAMS` in `src/lib/programs.ts` is short. Add Jupiter, Raydium,

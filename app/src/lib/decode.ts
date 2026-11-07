@@ -68,7 +68,9 @@ function decodeOne(index: number, programId: string, accounts: string[], data: B
   };
 }
 
-function decodeSystem(a: string[], data: Buffer) {
+type Decoded = Pick<DecodedInstruction, "type" | "summary" | "details">;
+
+function decodeSystem(a: string[], data: Buffer): Decoded {
   const kind = data.length >= 4 ? data.readUInt32LE(0) : -1;
   if (kind === 2) {
     const lamports = readU64(data, 4);
@@ -84,7 +86,7 @@ function decodeSystem(a: string[], data: Buffer) {
 
 const AUTHORITY_TYPES = ["MintTokens", "FreezeAccount", "AccountOwner", "CloseAccount"];
 
-function decodeToken(a: string[], data: Buffer) {
+function decodeToken(a: string[], data: Buffer): Decoded {
   switch (data[0]) {
     case 3: {
       const amt = readU64(data, 1);
