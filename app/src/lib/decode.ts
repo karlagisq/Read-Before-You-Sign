@@ -8,6 +8,7 @@ import {
   TOKEN_PROGRAMS,
   U64_MAX,
 } from "./programs";
+import { decodeSwap, fmtPct } from "./swaps";
 
 export const short = (a: string) => (a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
 
@@ -53,6 +54,31 @@ function decodeOne(index: number, programId: string, accounts: string[], data: B
     return { ...base, type: "CreateTokenAccount", summary: `Creates a token account for ${short(accounts[2] ?? "?")}`, details: {} };
   if (programId === COMPUTE_BUDGET_PROGRAM)
     return { ...base, type: "ComputeBudget", summary: "Sets compute limit / priority fee (harmless)", details: {} };
+
+  const swap = decodeSwap(programId, data);
+  if (swap) {
+    const lim = swap.limit === null ? "?" : fmtAmount(swap.limit);
+    const summary =
+      swap.mode === "exact-in"
+        ? `Swaps ${swap.amount} token units on ${swap.dex}, accepting at least ${lim} back`
+        : `Swaps on ${swap.dex} for ${swap.amount} token units, paying at most ${lim}`;
+    return {
+      ...base,
+      type: "Swap",
+      summary: swap.slippageBps === null ? summary : `${summary} (slippage ${fmtPct(swap.slippageBps)})`,
+      details: {
+        dex: swap.dex,
+        mode: swap.mode,
+        amount: swap.amount.toString(),
+        quoted: swap.quoted?.toString() ?? "",
+        limit: swap.limit === null ? "" : fmtAmount(swap.limit),
+        slippageBps: swap.slippageBps?.toString() ?? "",
+      },
+    };
+  }
+  if (base.known) {
+    return { ...base, type: "Other", summary: `${base.programName} instruction (not decoded in detail)`, details: {} };
+  }
 
   // Unknown program. For Anchor programs the first 8 bytes are a discriminator:
   // sha256("global:<instruction_name>")[0..8]. With the program's IDL you

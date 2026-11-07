@@ -15,8 +15,11 @@ seems to head that way, stop and keep it to detection only.
 
 ## How it works
 
+Entry points: `src/cli.ts` (the `rbys` terminal command, primary) and
+`src/app/api/explain/route.ts` (web UI). Both call `src/lib/analyze.ts`.
+
 ```
-base64 tx → decode (static)     src/lib/decode.ts
+base64 tx → decode (static)     src/lib/decode.ts     (+ src/lib/swaps.ts: DEX slippage)
           → simulate (dry run)  src/lib/simulate.ts   (diffs accounts before/after)
           → risk rules          src/lib/risk.ts       (score + flags, DETERMINISTIC)
           → explain             src/lib/explain.ts    (LLM phrases the facts, or template)
@@ -60,8 +63,13 @@ findings and rewords them; it must not change the verdict. Keep that split.
 
 - Address-lookup-table accounts aren't resolved in `decode.ts`/`simulate.ts`.
   Static keys only. Fine for the demo; note it as a limitation.
-- `KNOWN_PROGRAMS` in `src/lib/programs.ts` is short. Add Jupiter, Raydium,
-  Metaplex so common txns read as "known".
+- `KNOWN_PROGRAMS` in `src/lib/programs.ts` covers the main DEXes. Only add
+  addresses verified on an explorer.
+- Sandwich check (`swaps.ts`, rule 7 in `risk.ts`) reads Jupiter v6 route
+  variants and Raydium AMM v4 only. Not verified against a live mainnet
+  Jupiter tx yet: run one through `rbys -c mainnet` and check the slippage
+  matches what the swap UI showed. Jupiter `route_v2`, Orca, Meteora, Raydium
+  CLMM/CPMM are TODO. It reports exposure; it can't detect or stop a sandwich.
 - Anchor-program instructions decode as "unknown" (that's a correct, honest
   result). Fetching on-chain IDLs to name them is a stretch goal.
 - The registry is authority-gated. Open community reporting is a stretch goal.

@@ -6,6 +6,7 @@ import type {
   SimulationResult,
 } from "./types";
 import { U64_MAX } from "./programs";
+import { fmtPct } from "./swaps";
 
 /**
  * Deterministic risk rules. The SCORE AND FLAGS COME FROM HERE, never from the
@@ -104,6 +105,48 @@ export function assess(
           });
         }
       }
+    }
+  }
+
+  // 7. Sandwich-attack exposure on swaps. A sandwich bot can take up to your
+  // slippage tolerance, so loose slippage = money handed to bots. We can't see
+  // or stop the bot (it acts after you sign); we show your maximum exposure.
+  for (const ix of instructions) {
+    if (ix.type !== "Swap") continue;
+    const d = ix.details;
+    const n = ix.index + 1;
+    const exactIn = d.mode === "exact-in";
+    const unlimited = exactIn ? d.limit === "0" : d.limit === "UNLIMITED";
+    if (unlimited) {
+      add({
+        id: `sandwich-${ix.index}`,
+        severity: "danger",
+        title: "Swap has no price protection (easy sandwich target)",
+        detail: exactIn
+          ? `Instruction ${n} accepts a minimum of 0 tokens back. A sandwich bot could take nearly everything you're trading.`
+          : `Instruction ${n} will pay any amount in. A sandwich bot could make you pay far more than the real price.`,
+      });
+      continue;
+    }
+    if (!d.slippageBps) continue;
+    const bps = Number(d.slippageBps);
+    const exposure = exactIn
+      ? `you'd accept as little as ${d.limit} tokens back instead of the quoted ${d.quoted}`
+      : `you'd pay up to ${d.limit} tokens instead of the quoted ${d.quoted}`;
+    if (bps > 100) {
+      add({
+        id: `sandwich-${ix.index}`,
+        severity: bps >= 500 ? "danger" : "warning",
+        title: `High swap slippage (${fmtPct(bps)}) invites sandwich attacks`,
+        detail: `Instruction ${n}: bots can push your price up to ${fmtPct(bps)} worse and you'd still sign off on it — ${exposure}. Lower slippage (≤1%) or use an MEV-protected send.`,
+      });
+    } else {
+      add({
+        id: `sandwich-${ix.index}`,
+        severity: "info",
+        title: `Swap slippage is tight (${fmtPct(bps)})`,
+        detail: `Instruction ${n}: the most a sandwich bot could take is ${fmtPct(bps)} — ${exposure}.`,
+      });
     }
   }
 
