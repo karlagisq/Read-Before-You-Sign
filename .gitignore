@@ -1,0 +1,20 @@
+# node
+node_modules/
+.next/
+out/
+dist/
+
+# env
+.env
+.env.local
+.env*.local
+
+# anchor / rust
+programs/target/
+programs/.anchor/
+**/*.rs.bk
+test-ledger/
+
+# misc
+.DS_Store
+*.log
