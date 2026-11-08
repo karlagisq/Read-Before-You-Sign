@@ -147,6 +147,34 @@ anchor deploy --provider.cluster devnet
 Then open **http://localhost:3000/demo**, choose **Use demo wallet** (keyless)
 or connect a devnet Phantom, and sign a sample.
 
+## Live demo on devnet (real dry runs, no mock-ups)
+
+The basic samples use made-up accounts, so their dry run can't succeed. For a
+live demo, build samples on **real devnet accounts you own**:
+
+```bash
+# 1. devnet SOL for your CLI wallet (command-line airdrops are off on devnet):
+#    https://faucet.solana.com  → paste `solana address`, choose devnet
+cd programs
+npm run devnet-fixtures      # one-time setup ~0.01 devnet SOL: test token + accounts
+```
+
+It prints four unsigned transactions (unlimited approval, account handover,
+token transfer, SOL payment) and saves them for the Demo dApp. Then:
+
+1. Extension popup → network **Devnet**.
+2. `cd app && npm run dev` → **http://localhost:3000/demo** → **Use demo wallet**.
+3. In **Live on devnet**, click **Sign live sample**. The panel's "If you sign,
+   this changes" box shows the real dry-run result: the new spender with
+   UNLIMITED access, the new owner, or the exact balance changes.
+4. Blocklist moment: run the `flag-address.ts` command the script prints, wait
+   ~30 s, and sign the approval again: "Touches an address on the community
+   blocklist" appears, read live from your Anchor program.
+
+Solana's public devnet RPC rate-limits busy moments (HTTP 429). For a smooth
+recording, paste a free Helius devnet RPC URL into the extension popup →
+Advanced.
+
 ## Demo script (2 minutes)
 
 **0:00 — The problem (15s).** "Every Solana wallet popup asks you to trust a
@@ -155,11 +183,14 @@ transaction says *give this stranger unlimited access to your tokens*. And on
 swaps, loose slippage quietly hands money to sandwich bots."
 
 **0:15 — It's already there (25s).** Open the Demo dApp (it stands in for any
-Solana site). Click **Unlimited token approval**. *Before* the wallet opens,
+Solana site). In **Live on devnet**, click **Unlimited token approval**. *Before* the wallet opens,
 the Read Before You Sign panel appears: **High risk — Grants UNLIMITED
 spending of your tokens**, naming who gets access. Point out **Continue** is
-locked until you tick "I understand the risk." Click **Reject**: the site gets
-a normal "user rejected" error.
+locked until you tick "I understand the risk." Point at **"If you sign, this changes"**:
+a live devnet dry run on a real token account shows the new spender with
+UNLIMITED access. Click **Reject**: the site gets a normal "user rejected" error.
+Then sign the live **token transfer**: **Looks okay**, with the exact balance
+changes. No crying wolf.
 
 **0:40 — Sandwich exposure (30s).** Click **Swap with 10% slippage**: "High
 swap slippage invites sandwich attacks — you'd accept as little as 135 instead

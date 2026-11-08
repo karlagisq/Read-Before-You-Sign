@@ -65,12 +65,11 @@ findings and rewords them; it must not change the verdict. Keep that split.
 
 ## Known gaps / TODOs (search the code for "TODO")
 
-- The sample fixtures use placeholder keys that don't exist on devnet, so the
-  simulation step always fails for them ("Transaction failed to simulate",
-  +20). `approve-unlimited` still scores HIGH (static Approve rule), but
-  `safe-transfer` scores MEDIUM instead of LOW. To make it clean, give
-  `make-sample-tx.ts` a devnet mode that creates a throwaway mint + token
-  accounts you own and builds the fixtures against those real accounts.
+- The basic sample fixtures use placeholder keys, so their dry run fails
+  ("failed to simulate", +20). For live demos use
+  `programs/scripts/devnet-fixtures.ts` (`npm run devnet-fixtures`): real
+  devnet accounts you own, so the simulation succeeds. Output goes to
+  `app/public/devnet-fixtures.json` (gitignored) for the Demo dApp.
 
 - Address-lookup-table accounts aren't resolved in `decode.ts`/`simulate.ts`.
   Static keys only. Fine for the demo; note it as a limitation.

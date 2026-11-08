@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Connection, Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { SAMPLES, buildSample, type Sample } from "@/lib/samples";
+import { Buffer } from "buffer";
 
 /**
  * Demo dApp: a stand-in for "any Solana site". Each button asks the wallet to
@@ -52,10 +53,37 @@ function installDemoWallet(): LegacyProvider {
   return window.solana;
 }
 
+interface LiveSample { id: string; title: string; pitch: string; expect: "high" | "medium" | "low"; base64: string }
+interface LiveFixtures { cluster: string; wallet: string; mint: string; generatedAt: string; samples: LiveSample[] }
+
 export default function Demo() {
   const [wallet, setWallet] = useState<{ name: string; provider: LegacyProvider; pubkey: PublicKey } | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [live, setLive] = useState<LiveFixtures | null>(null);
+
+  // Real devnet transactions made by `npm run devnet-fixtures` in programs/ (optional).
+  useEffect(() => {
+    fetch("/devnet-fixtures.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j?.samples?.length && setLive(j))
+      .catch(() => {});
+  }, []);
+
+  async function runLive(s: LiveSample) {
+    if (!wallet) return;
+    setBusy(s.id);
+    try {
+      const tx = VersionedTransaction.deserialize(Buffer.from(s.base64, "base64"));
+      note(`Asking ${wallet.name} to sign: ${s.title}`);
+      await wallet.provider.signTransaction(tx);
+      note(`✔ "${s.title}" approved in the review (not sent: this page never broadcasts)`);
+    } catch (e) {
+      note(`✖ Rejected: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(null);
+    }
+  }
   const note = (s: string) => setLog((l) => [`${new Date().toLocaleTimeString()}  ${s}`, ...l].slice(0, 12));
 
   async function connect(useDemo = false) {
@@ -131,6 +159,36 @@ export default function Demo() {
           * These show &ldquo;worth a look&rdquo; rather than &ldquo;looks okay&rdquo;: their placeholder accounts make the dry
           run fail, and the tool honestly says it couldn&apos;t verify them.
         </p>
+        {live && (
+          <>
+            <div className="section-title" style={{ marginTop: 22 }}>Live on devnet</div>
+            <p style={{ color: "var(--muted)", fontSize: 13, margin: "4px 4px 0", lineHeight: 1.5 }}>
+              Real transactions on your own devnet test accounts (wallet {live.wallet.slice(0, 4)}…{live.wallet.slice(-4)}), so the
+              dry run succeeds and shows what would really change. Use <b>Use demo wallet</b> for these: they belong to your
+              command-line devnet wallet, not to Phantom. Set the extension to Devnet.
+            </p>
+            <div className="grid" style={{ marginTop: 10 }}>
+              {live.samples.map((s) => (
+                <div className="tile" key={s.id}>
+                  <h3>
+                    {s.title.replace(/^LIVE: /, "")}
+                    <span className={`expect ${s.expect}`}>{s.expect === "high" ? "should flag" : "should pass"}</span>
+                  </h3>
+                  <p>{s.pitch}</p>
+                  <button className="btn-ghost" disabled={!wallet || busy !== null} onClick={() => runLive(s)}>
+                    {busy === s.id ? "Waiting for review…" : "Sign live sample"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        {!live && (
+          <p style={{ color: "var(--faint)", fontSize: 12, margin: "14px 4px 0" }}>
+            Want the live version? Run <code>npm run devnet-fixtures</code> in <code>programs/</code> to add real devnet samples here.
+          </p>
+        )}
+
         {log.length > 0 && <div className="log">{log.join("\n")}</div>}
       </div>
     </main>

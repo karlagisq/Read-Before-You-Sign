@@ -24,3 +24,7 @@ app/scripts/.buffer-shim.js
 
 # the extension ships its built analyzer so "Load unpacked" works from a clone
 !extension/dist/
+
+# per-user devnet demo data (public addresses only, but specific to your wallet)
+programs/.devnet-fixtures.json
+app/public/devnet-fixtures.json

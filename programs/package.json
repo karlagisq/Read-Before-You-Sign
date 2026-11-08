@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "sample-tx": "ts-node scripts/make-sample-tx.ts",
-    "flag": "ts-node scripts/flag-address.ts"
+    "flag": "ts-node scripts/flag-address.ts",
+    "devnet-fixtures": "ts-node scripts/devnet-fixtures.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",

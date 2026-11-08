@@ -116,6 +116,11 @@
   .disc { margin-top: 8px; font-size: 12px; color: #8d97c4; }
   .explain { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: #0b1124; font-size: 13px; }
   .route { margin-top: 10px; color: #8d97c4; font-size: 12px; }
+  .changes { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #0b1124; border: 1px solid rgba(148,163,255,.14); }
+  .changes .ct { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #5c668f; font-weight: 700; margin-bottom: 4px; }
+  .crow { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 2px 0; }
+  .crow .k { color: #8d97c4; } .crow .v { font-family: "Roboto Mono", ui-monospace, monospace; }
+  .neg { color: #ff6b81; } .pos { color: #34d399; } .warnc { color: #fbbf24; }
   .spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,.15); border-top-color: #5eead4;
     animation: s .8s linear infinite; flex: none; } @keyframes s { to { transform: rotate(360deg); } }
   .confirm { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; font-size: 13px; color: #c7cdf0; cursor: pointer; }
@@ -232,6 +237,32 @@
       return card;
     }
 
+    // What the dry run says would actually change. This is the live proof.
+    function changesCard(sim) {
+      const box = el("div", "changes");
+      box.append(el("div", "ct", sim.ok ? "If you sign, this changes (from a live dry run)" : "Dry run didn't complete: nothing verified"));
+      const short = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || "?");
+      const row = (k, v, cls) => {
+        const r = el("div", "crow");
+        r.append(el("span", "k", k), el("span", `v ${cls || ""}`, v));
+        box.append(r);
+      };
+      if (sim.ok) {
+        for (const b of sim.balanceChanges) {
+          const d = BigInt(b.delta);
+          const amt = b.kind === "sol" ? `${Number(d) / 1e9} SOL` : `${d} token units`;
+          row(`${b.kind === "sol" ? "SOL" : "Tokens"} · ${short(b.address)}`, `${d > 0n ? "+" : ""}${amt}`, d < 0n ? "neg" : "pos");
+        }
+        for (const c of sim.delegateChanges) {
+          if (c.delegateAfter) row(`New spender on ${short(c.tokenAccount)}`, c.delegatedAmountAfter === "18446744073709551615" ? `${short(c.delegateAfter)} · UNLIMITED` : `${short(c.delegateAfter)} · ${c.delegatedAmountAfter}`, "warnc");
+        }
+        for (const o of sim.ownerChanges) row(`New owner of ${short(o.tokenAccount)}`, short(o.after), "neg");
+        if (!sim.balanceChanges.length && !sim.delegateChanges.length && !sim.ownerChanges.length) row("Balances", "no changes");
+        if (sim.unitsConsumed) row("Compute used", `${sim.unitsConsumed.toLocaleString()} units`);
+      }
+      return box;
+    }
+
     function protectCard(p, urgent) {
       const wrap = el("div", "protect");
       const d = el("details");
@@ -285,6 +316,7 @@
             const urgent = rep.flags.some((f) => f.id.startsWith("sandwich") && f.severity !== "info");
             sec.append(protectCard(r.protect, urgent));
           }
+          sec.append(changesCard(rep.simulation));
           if (rep.explanationSource === "llm") sec.append(el("div", "explain", rep.explanation));
           const names = [...new Set(rep.instructions.map((x) => x.programName))].join(" → ");
           sec.append(el("div", "route", `What it calls: ${names} · checked on ${r.cluster}`));
