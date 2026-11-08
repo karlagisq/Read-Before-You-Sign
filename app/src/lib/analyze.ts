@@ -17,6 +17,8 @@ export interface AnalyzeOptions {
   /** Cluster the scam-registry lives on (devnet, where you deployed it). */
   registryRpcUrl?: string;
   anthropicApiKey?: string;
+  /** Deployed scam-registry program; omit to skip the blocklist check. */
+  registryProgramId?: string;
 }
 
 /**
@@ -52,7 +54,7 @@ export async function analyze(input: string, opts: AnalyzeOptions): Promise<Repo
         logs: [], unitsConsumed: null, balanceChanges: [], delegateChanges: [], ownerChanges: [],
       })
     ),
-    loadFlaggedAddresses(registryConn),
+    loadFlaggedAddresses(registryConn, opts.registryProgramId),
   ]);
   const { flags, score, level } = assess(instructions, simulation, { flaggedAddresses });
   const partial = { feePayer, instructions, simulation, flags, score, level };

@@ -18,7 +18,10 @@ seems to head that way, stop and keep it to detection only.
 Primary interface: the browser extension in `extension/`. `inject.js` (page
 world) wraps Wallet Standard + injected-provider signing methods; `bridge.js`
 (isolated world) shows the review panel in a closed shadow root and only
-accepts trusted clicks; `background.js` POSTs to the app's `/api/explain`.
+accepts trusted clicks; `src/background.ts` bundles the analyzer from
+`app/src/lib` (build with `cd app && npm run build:ext` → `dist/background.js`),
+so the extension needs no server. Keep `app/src/lib` free of Node-only APIs.
+Guidance text (advice under flags, swap checklist) lives in `app/src/lib/guidance.ts`.
 The extension never modifies a transaction; it only pauses or rejects (4001).
 
 App entry points: `src/app/api/explain/route.ts` (used by the extension and

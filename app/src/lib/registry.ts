@@ -1,4 +1,3 @@
-import { createHash } from "crypto";
 import { Connection, PublicKey } from "@solana/web3.js";
 
 /**
@@ -11,16 +10,14 @@ import { Connection, PublicKey } from "@solana/web3.js";
  * We only need `flagged`, so we ask the RPC for just bytes 8..40.
  */
 
-const ENTRY_DISCRIMINATOR = createHash("sha256")
-  .update("account:FlaggedEntry")
-  .digest()
-  .subarray(0, 8);
+// sha256("account:FlaggedEntry")[0..8], precomputed (runs in the extension too).
+const ENTRY_DISCRIMINATOR = Buffer.from("3e79dac122902bc3", "hex");
 
 const CACHE_MS = 30_000;
 let cache: { at: number; programId: string; addresses: Set<string> } | null = null;
 
-export async function loadFlaggedAddresses(connection: Connection): Promise<Set<string>> {
-  const programId = process.env.REGISTRY_PROGRAM_ID?.trim();
+export async function loadFlaggedAddresses(connection: Connection, registryProgramId?: string): Promise<Set<string>> {
+  const programId = registryProgramId?.trim();
   if (!programId) return new Set(); // registry not configured: rule 5 just doesn't fire
 
   if (cache && cache.programId === programId && Date.now() - cache.at < CACHE_MS) {

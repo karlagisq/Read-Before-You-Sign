@@ -24,7 +24,11 @@
   --radius-lg: 24px;
   --radius: 16px;
   --radius-sm: 12px;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --mono: "Roboto Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-body: Roboto, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "League Spartan", Roboto, ui-sans-serif, system-ui, sans-serif;
+  --btn: rgba(0, 69, 115, 0.85);
+  --btn-hover: rgba(0, 82, 137, 0.95);
 }
 
 * { box-sizing: border-box; }
@@ -38,7 +42,7 @@ body {
     var(--bg);
   background-attachment: fixed;
   color: var(--text);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -74,7 +78,7 @@ button { font: inherit; }
 /* ---------- layout ---------- */
 .page { max-width: 1100px; margin: 0 auto; padding: 48px 16px 80px; }
 .hero { text-align: center; margin-bottom: 28px; }
-.hero h1 { font-size: clamp(28px, 4vw, 40px); margin: 0 0 8px; letter-spacing: -0.02em; }
+.hero h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 5vw, 48px); line-height: 1.08; margin: 0 0 12px; letter-spacing: -0.01em; }
 .hero p { margin: 0 auto; color: var(--muted); max-width: 520px; line-height: 1.5; }
 .grad-text { background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
@@ -88,7 +92,7 @@ button { font: inherit; }
 }
 .card.wide { max-width: 720px; }
 .card-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 12px; }
-.card-title { font-size: 16px; font-weight: 700; }
+.card-title { font-size: 16px; font-weight: 400; }
 
 .segmented { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--panel); border: 1px solid var(--border); }
 .segmented button {
@@ -113,10 +117,10 @@ button { font: inherit; }
 
 .btn-primary {
   width: 100%; margin-top: 12px; padding: 16px; border: 0; border-radius: var(--radius);
-  background: var(--accent-grad); color: #06101f; font-weight: 700; font-size: 16px; cursor: pointer;
-  transition: filter 0.15s, transform 0.05s;
+  background: var(--btn); color: var(--text); font-weight: 700; font-size: 16px; cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
 }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-primary:hover:not(:disabled) { background: var(--btn-hover); }
 .btn-primary:active:not(:disabled) { transform: translateY(1px); }
 .btn-primary:disabled { background: rgba(255, 255, 255, 0.06); color: var(--faint); cursor: default; }
 .btn-ghost {
@@ -140,10 +144,10 @@ button { font: inherit; }
 .verdict.high .verdict-icon { background: var(--danger); color: #2a0610; }
 .verdict.medium .verdict-icon { background: var(--warn); color: #2a1d02; }
 .verdict.low .verdict-icon { background: var(--ok); color: #03251a; }
-.verdict-title { font-size: 18px; font-weight: 700; }
+.verdict-title { font-size: 18px; font-weight: 400; }
 .verdict-sub { font-size: 13px; color: var(--muted); }
 .score { margin-left: auto; text-align: right; }
-.score b { font-size: 22px; }
+.score b { font-family: var(--font-display); font-weight: 800; font-size: 24px; }
 .score span { font-size: 12px; color: var(--muted); display: block; }
 
 .meter { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); overflow: hidden; margin-top: 2px; }
@@ -154,7 +158,7 @@ button { font: inherit; }
 .flag.danger .flag-mark { color: var(--danger); }
 .flag.warning .flag-mark { color: var(--warn); }
 .flag.info .flag-mark { color: var(--info); }
-.flag-title { font-weight: 600; font-size: 14px; }
+.flag-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
 .flag-detail { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.45; }
 
 .rows { display: grid; gap: 8px; }
@@ -178,7 +182,7 @@ details.route summary::-webkit-details-marker { display: none; }
 /* ---------- feature / demo grid ---------- */
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 28px; }
 .tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
-.tile h3 { margin: 0 0 6px; font-size: 15px; }
+.tile h3 { margin: 0 0 6px; font-family: var(--font-display); font-weight: 600; font-size: 17px; }
 .tile p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .tile .btn-ghost { margin-top: 14px; width: 100%; }
 .expect { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; margin-left: 8px; }
@@ -209,7 +213,7 @@ details.route summary::-webkit-details-marker { display: none; }
   position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   width: max-content; max-width: 260px; padding: 8px 10px; border-radius: 10px; z-index: 20;
   background: var(--card-solid); border: 1px solid var(--border-strong); color: var(--text);
-  font: 400 12px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; text-align: left; white-space: normal;
+  font: 400 12px/1.45 var(--font-body); text-align: left; white-space: normal;
   opacity: 0; pointer-events: none; transition: opacity 0.12s;
 }
 .tip:hover .tip-body, .tip:focus .tip-body { opacity: 1; }
@@ -230,7 +234,7 @@ details.route summary::-webkit-details-marker { display: none; }
 .lookup { display: flex; gap: 10px; align-items: center; }
 .lookup-input { min-height: 0; height: 24px; resize: none; }
 
-.total { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.total { font-family: var(--font-display); font-size: 32px; font-weight: 700; }
 .holding .k { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; text-align: left; }
 .sym { color: var(--text); font-weight: 700; }
 .activity { padding: 10px 0; border-top: 1px solid var(--border); }
@@ -243,3 +247,21 @@ details.route summary::-webkit-details-marker { display: none; }
 .wallet-adapter-button { font-family: inherit !important; border-radius: var(--radius-sm) !important; height: 44px !important; justify-content: center; width: 100%; }
 .wallet-adapter-button-trigger { background: var(--accent-grad) !important; color: #06101f !important; }
 .wallet-adapter-modal-wrapper { background: var(--card-solid) !important; border: 1px solid var(--border-strong); }
+
+/* ---------- guidance: what you can do / protect your swaps ---------- */
+.advice { margin: 8px 0 0; }
+.advice summary { cursor: pointer; color: var(--accent); font-size: 12px; font-weight: 500; list-style: none; }
+.advice summary::-webkit-details-marker { display: none; }
+.advice summary::before { content: "▸ "; }
+.advice[open] summary::before { content: "▾ "; }
+.advice ul { margin: 6px 0 0; padding-left: 18px; color: #c7cdf0; font-size: 13px; line-height: 1.5; }
+.advice li + li { margin-top: 4px; }
+.protect { padding: 14px 16px; border-radius: var(--radius); border: 1px solid rgba(94, 234, 212, 0.35); background: rgba(94, 234, 212, 0.06); }
+.protect summary { cursor: pointer; list-style: none; font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.protect summary::-webkit-details-marker { display: none; }
+.protect summary::before { content: "▸ "; color: var(--accent); }
+.protect[open] summary::before { content: "▾ "; }
+.protect ol { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 13px; color: #c7cdf0; line-height: 1.5; }
+.protect ol b { color: var(--text); font-weight: 500; }
+.protect .disc { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.brand-logo { width: 32px; height: 32px; display: block; }

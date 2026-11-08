@@ -34,7 +34,7 @@ Built for the MLH Solana Hackathon (Nov 6–8, 2026), AI track.
 site asks wallet to sign
         │
         ▼
-extension (inject.js) pauses the request ──► analyzer API  ─► decode instructions (+ swap slippage)
+extension (inject.js) pauses the request ──► built-in analyzer ─► decode instructions (+ swap slippage)
         │                                                    ─► simulate on Solana, diff accounts before/after
         │                                                    ─► read on-chain scam registry
         │                                                    ─► deterministic risk rules → score + flags
@@ -43,6 +43,9 @@ extension (inject.js) pauses the request ──► analyzer API  ─► decode i
 review panel: Reject  /  Continue to wallet  ──► wallet popup opens only if you continue
 ```
 
+The extension carries the whole analyzer inside it (`extension/dist/background.js`,
+bundled from `app/src/lib`), so it works with no server running.
+
 1. **Decode** the instructions: which programs, which accounts, and for
    Jupiter/Raydium swaps, the slippage limit.
 2. **Simulate** with Solana's `simulateTransaction` and diff every writable
@@ -50,7 +53,10 @@ review panel: Reject  /  Continue to wallet  ──► wallet popup opens only i
    does, not just what it claims.
 3. **Score** with deterministic rules: unlimited approvals, ownership
    handovers, sandwich exposure, unknown programs, blocklisted addresses.
-4. **Explain** in plain language. The score is fixed by the rules; the AI only
+4. **Guide**: every warning comes with "What you can do" steps, and any swap
+   comes with a "Protect your swaps" checklist (`app/src/lib/guidance.ts`).
+   Fixed text chosen by rule, never written by the AI.
+5. **Explain** in plain language. The score is fixed by the rules; the AI only
    rewords the findings and can't declare something safe.
 
 The **scam registry** (an Anchor program in `programs/`, deployed on devnet)
@@ -113,18 +119,25 @@ and Raydium AMM v4.
 
 ## Quick start
 
+**Just the extension (no setup):** unzip `read-before-you-sign-extension.zip`,
+open `chrome://extensions`, turn on **Developer mode**, click **Load
+unpacked** and pick the unzipped folder. Click the shield icon to choose
+Devnet (testing) or Mainnet (real funds). That's it: the checker is built in.
+
+**Everything (web app, CLI, Rust program):**
+
 ```bash
-# 1. the analyzer + web UI
+# web app + CLI
 cd app
 npm install
-cp .env.example .env.local      # set REGISTRY_PROGRAM_ID, optional ANTHROPIC_API_KEY
+cp .env.example .env.local      # optional: REGISTRY_PROGRAM_ID, ANTHROPIC_API_KEY, HELIUS_API_KEY
 npm run dev                     # http://localhost:3000
+npm link                        # `rbys` in your terminal
 
-# 2. the extension (Chrome / Brave / Edge)
-#    chrome://extensions → Developer mode → Load unpacked → choose ./extension
-#    click the extension icon → pick Devnet → it should say "Connected"
+# rebuild the extension after changing app/src/lib or extension/src
+npm run build:ext               # → extension/dist/background.js + extension/fonts
 
-# 3. the Anchor program
+# the Anchor program
 cd ../programs
 npm install
 anchor build && anchor keys sync && anchor build && anchor test
@@ -133,14 +146,6 @@ anchor deploy --provider.cluster devnet
 
 Then open **http://localhost:3000/demo**, choose **Use demo wallet** (keyless)
 or connect a devnet Phantom, and sign a sample.
-
-### Terminal (optional)
-
-```bash
-cd app && npm link              # installs `rbys`
-rbys <base64-tx>                # or pipe: some-command | rbys
-rbys -c mainnet --json <tx>
-```
 
 ## Demo script (2 minutes)
 
@@ -202,7 +207,8 @@ Highest impact first:
    typosquats) next to the transaction review.
 8. **Token-2022 extensions.** Warn on permanent-delegate, transfer-hook, and
    freeze-authority mints; these can take or lock tokens later.
-9. **Hosted analyzer + store listing.** Deploy the API (e.g. Vercel) with a
+9. **Store listing.** The extension is self-contained now; publish it to the
+   Chrome Web Store (needs a privacy policy page). Hosting the web app (e.g. Vercel) with a
    private RPC so the extension works without a local server, then publish
    to the Chrome Web Store.
 10. **Mobile.** Wallet in-app browsers can't load extensions; a deep-link
@@ -212,13 +218,14 @@ Highest impact first:
 
 - `extension/` — the browser extension (Manifest V3): `inject.js` wraps the
   wallet's signing methods, `bridge.js` shows the review panel,
-  `background.js` calls the analyzer, `popup.html` holds settings.
+  `src/background.ts` (built to `dist/background.js`) is the analyzer,
+  `popup.html` holds settings, `icons/` and `fonts/` are bundled.
 - `app/` — analyzer + UI (TypeScript/Next.js): `src/lib/` is the engine,
   `src/app/` the web UI (`/` checker, `/demo` demo dApp, `/extension`
   install guide), `src/cli.ts` the `rbys` command.
 - `programs/` — the Anchor workspace (Rust): `scam-registry`, plus scripts to
   flag addresses and generate sample transactions.
-- `design/` — theme tokens, the Figma link, and `apply-tokens.mjs` to push
+- `design/` — `logo-mark.svg` (the Shield Check mark), logo concepts, theme tokens, the Figma link, and `apply-tokens.mjs` to push
   color changes into the web app, extension and CLI. See `design/README.md`.
 
 ## Try the samples
@@ -248,13 +255,13 @@ you to approve in its own popup.
 
 | Concern | How it's handled |
 | --- | --- |
-| Pending transactions leaking (a bot that sees your swap early can sandwich it) | The extension only sends transactions to an analyzer **on your own computer** (`localhost`). Remote URLs are refused in both the settings and the background worker. |
-| What the analyzer sends out | The transaction goes to the Solana RPC for simulation (same as your wallet's own preview). Use a trusted or private RPC via `SOLANA_RPC_URL` / `MAINNET_RPC_URL`. If you set an Anthropic key, only the **findings** (not the raw transaction) are sent for wording. Nothing is logged or stored. |
+| Pending transactions leaking (a bot that sees your swap early can sandwich it) | The analyzer runs **inside the extension** on your computer. A transaction only leaves it for the Solana RPC dry run, the same thing your wallet does for its own preview. The extension can reach only Solana's public RPCs; a custom RPC is opt-in and Chrome asks you to allow that one host. |
+| What gets sent out | Extension: only the RPC dry run (no AI, no analytics). Web app: the same, plus, if you set an Anthropic key, only the **findings** (not the raw transaction) are sent for wording. Nothing is logged or stored. |
 | Websites abusing your local analyzer | `/api/explain` rejects cross-site browser requests (403). Only the app itself, the extension, and command-line tools can call it. |
 | A phishing page faking its identity | The panel shows the site's origin as Chrome reports it to the extension, not what the page claims. |
 | A page reading or clicking the panel | The panel lives in a closed shadow root in the extension's isolated world and only accepts real user clicks (`isTrusted`). On high risk, Continue stays locked until you tick a box. |
-| Stored data | Only three settings (on/off, default network, analyzer URL) in `chrome.storage`. No history, no keys. |
-| Supply chain | The extension has zero third-party dependencies and no remote code (Manifest V3 forbids it). Permissions: `storage` plus `localhost` only. |
+| Stored data | Only three settings (on/off, network, optional custom RPC) in `chrome.storage`. No history, no keys. |
+| Supply chain | No remote code (Manifest V3 forbids it). The analyzer bundle is built from this repo with pinned dependencies (`@solana/web3.js`, `buffer`); licenses in `dist/background.js.LEGAL.txt`. Permissions: `storage` plus Solana's public RPC hosts. Fonts are bundled, so pages never call Google. |
 
 ## Limitations
 
@@ -263,8 +270,9 @@ you to approve in its own popup.
   it protects against everyday risky and phishing transactions. The review
   panel itself sits in a closed shadow root and only accepts real clicks, so
   a page can't read it or press Continue for you.
-- The analyzer runs locally (`localhost:3000`) for the hackathon; see
-  "Hosted analyzer" above.
+- The extension can't change a site's transaction (and shouldn't: editing a
+  swap's slippage would change what you agreed to). It warns and guides; you
+  fix the trade on the site, then sign the corrected one.
 - Sandwich checks read the slippage a swap declares; they can't detect an
   actual sandwich. Only Jupiter v6 and Raydium AMM v4 are decoded.
 - Address-lookup-table accounts aren't resolved (static keys only).

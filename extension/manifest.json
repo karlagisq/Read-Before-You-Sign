@@ -1,23 +1,27 @@
 {
   "manifest_version": 3,
   "name": "Read Before You Sign",
-  "version": "0.1.0",
-  "description": "Shows what a Solana transaction really does before your wallet opens.",
+  "version": "1.0.0",
+  "description": "See what a Solana transaction really does, and how to protect your swaps, before your wallet opens.",
+  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
   "permissions": ["storage"],
-  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_title": "Read Before You Sign", "default_popup": "popup.html" },
+  "host_permissions": [
+    "https://api.devnet.solana.com/*",
+    "https://api.mainnet-beta.solana.com/*",
+    "https://api.testnet.solana.com/*"
+  ],
+  "optional_host_permissions": ["https://*/*"],
+  "background": { "service_worker": "dist/background.js" },
+  "action": {
+    "default_title": "Read Before You Sign",
+    "default_popup": "popup.html",
+    "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png" }
+  },
   "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["bridge.js"],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["inject.js"],
-      "run_at": "document_start",
-      "world": "MAIN"
-    }
+    { "matches": ["http://*/*", "https://*/*"], "js": ["bridge.js"], "run_at": "document_start" },
+    { "matches": ["http://*/*", "https://*/*"], "js": ["inject.js"], "run_at": "document_start", "world": "MAIN" }
+  ],
+  "web_accessible_resources": [
+    { "resources": ["fonts/*.woff2"], "matches": ["http://*/*", "https://*/*"] }
   ]
 }

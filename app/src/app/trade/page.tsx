@@ -5,6 +5,7 @@ import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import type { Portfolio } from "@/lib/portfolio";
 import { PortfolioView } from "@/components/trade/Portfolio";
 import { Tip } from "@/components/trade/Tip";
+import { ProtectSwaps } from "@/components/Guidance";
 
 /**
  * Trade safely: protection for trades YOU start.
@@ -114,6 +115,13 @@ export default function Trade() {
         {loading && <div className="src" style={{ margin: "12px 4px" }}>Reading wallet…</div>}
         {error && <div className="error">{error}</div>}
         {portfolio && <PortfolioView p={portfolio} />}
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <div className="card-head">
+          <span className="card-title">Before your next swap</span>
+        </div>
+        <ProtectSwaps open />
       </div>
     </main>
   );

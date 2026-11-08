@@ -54,6 +54,8 @@ export interface RiskFlag {
   severity: Severity;
   title: string;
   detail: string;
+  /** Plain-English steps the user can take (from guidance.ts, never from the AI). */
+  advice?: string[];
 }
 
 export type RiskLevel = "low" | "medium" | "high";

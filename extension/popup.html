@@ -1,34 +1,75 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
-  body { margin: 0; width: 300px; background: #111830; color: #eef1ff;
-    font: 13px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-  .wrap { padding: 16px; display: grid; gap: 12px; }
-  .head { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 14px; }
-  .mark { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: #06101f; font-weight: 900;
-    background: linear-gradient(135deg,#5eead4,#38bdf8 45%,#8b5cf6); }
-  label { display: grid; gap: 4px; color: #8d97c4; }
-  input[type=text], select { font: inherit; color: #eef1ff; background: #0b1124; border: 1px solid rgba(148,163,255,.2);
-    border-radius: 10px; padding: 8px 10px; }
-  .row { display: flex; justify-content: space-between; align-items: center; color: #eef1ff; }
-  button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 10px; cursor: pointer; color: #06101f;
-    background: linear-gradient(135deg,#5eead4,#38bdf8 45%,#8b5cf6); }
-  #status { font-size: 12px; color: #8d97c4; min-height: 1em; }
+  @font-face { font-family: "RBYS Roboto"; src: url("fonts/roboto-latin-400-normal.woff2") format("woff2"); font-weight: 400; }
+  @font-face { font-family: "RBYS Roboto"; src: url("fonts/roboto-latin-500-normal.woff2") format("woff2"); font-weight: 500; }
+  @font-face { font-family: "RBYS Roboto"; src: url("fonts/roboto-latin-700-normal.woff2") format("woff2"); font-weight: 700; }
+  @font-face { font-family: "RBYS Spartan"; src: url("fonts/league-spartan-latin-700-normal.woff2") format("woff2"); font-weight: 700; }
+  body { margin: 0; width: 320px; background: #111830; color: #eef1ff; font: 13px/1.45 "RBYS Roboto", Roboto, system-ui, sans-serif; }
+  .wrap { padding: 16px; display: grid; gap: 14px; }
+  .head { display: flex; align-items: center; gap: 10px; }
+  .head svg { width: 30px; height: 30px; }
+  .head h1 { margin: 0; font: 700 16px/1.2 "RBYS Spartan", "League Spartan", system-ui, sans-serif; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  label.field { display: grid; gap: 4px; color: #8d97c4; }
+  select, input[type=text] { font: inherit; color: #eef1ff; background: #0b1124; border: 1px solid rgba(148,163,255,.28); border-radius: 10px; padding: 9px 10px; }
+  .switch { position: relative; width: 38px; height: 22px; flex: none; }
+  .switch input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; cursor: pointer; }
+  .switch span { position: absolute; inset: 0; border-radius: 999px; background: #2a3354; transition: .15s; pointer-events: none; }
+  .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #eef1ff; transition: .15s; }
+  .switch input:checked + span { background: #5eead4; }
+  .switch input:checked + span::after { left: 19px; background: #06101f; }
+  .switch input:focus-visible + span { outline: 2px solid #5eead4; outline-offset: 2px; }
+  button { font: 700 14px/1 "RBYS Roboto", Roboto, system-ui, sans-serif; border: 0; border-radius: 12px; padding: 12px; cursor: pointer; color: #eef1ff; background: rgba(0,69,115,.85); }
+  button:hover { background: rgba(0,82,137,.95); }
+  details summary { cursor: pointer; color: #8d97c4; }
+  details[open] { display: grid; gap: 8px; }
+  .hint { color: #8d97c4; font-size: 12px; }
+  #status { font-size: 12px; min-height: 1em; color: #8d97c4; }
   .ok { color: #34d399 !important; } .bad { color: #ff6b81 !important; }
+  .tips { background: rgba(94,234,212,.06); border: 1px solid rgba(94,234,212,.3); border-radius: 12px; padding: 10px 12px; }
+  .tips b { display: block; margin-bottom: 4px; }
+  .tips ul { margin: 0; padding-left: 18px; color: #c7cdf0; }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="head"><div class="mark">✓</div>Read Before You Sign</div>
-    <div class="row"><span>Review every sign request</span><input id="enabled" type="checkbox"></div>
-    <label>Network when the site doesn't say
-      <select id="cluster"><option value="devnet">Devnet</option><option value="mainnet">Mainnet</option><option value="testnet">Testnet</option></select>
+    <div class="head">
+      <svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><defs><linearGradient id="g" x1="20" y1="10" x2="117.6" y2="88" gradientUnits="userSpaceOnUse"><stop stop-color="#5EEAD4"/><stop offset=".45" stop-color="#38BDF8"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs><path d="M60 10 100 24v34c0 26-18 44-40 52-22-8-40-26-40-52V24L60 10Z" fill="url(#g)"/><path d="m42 60 13 13 25-27" stroke="#070B1A" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h1>Read Before You Sign</h1>
+    </div>
+
+    <div class="row">
+      <span>Check every wallet request</span>
+      <label class="switch" aria-label="Check every wallet request"><input id="enabled" type="checkbox"><span></span></label>
+    </div>
+
+    <label class="field">Network to check on (when the site doesn't say)
+      <select id="cluster"><option value="devnet">Devnet (testing)</option><option value="mainnet">Mainnet (real funds)</option><option value="testnet">Testnet</option></select>
     </label>
-    <label>Analyzer URL <input id="apiUrl" type="text" spellcheck="false"></label>
-    <button id="save">Save &amp; test connection</button>
-    <div id="status"></div>
+
+    <details>
+      <summary>Advanced: use your own RPC</summary>
+      <label class="field">RPC URL (optional, https)
+        <input id="customRpc" type="text" spellcheck="false" placeholder="https://mainnet.helius-rpc.com/?api-key=…">
+      </label>
+      <div class="hint">Only used for the network above. Chrome will ask before the extension can reach it.</div>
+    </details>
+
+    <button id="save">Save &amp; test</button>
+    <div id="status" role="status"></div>
+
+    <div class="tips">
+      <b>Swapping? Quick protection</b>
+      <ul>
+        <li>Slippage 0.3–0.5% on big tokens, ≤1% on small ones</li>
+        <li>Use an MEV-protected route (e.g. Jupiter Ultra)</li>
+        <li>Price impact over 1%? Trade smaller.</li>
+      </ul>
+    </div>
+    <div class="hint">Checks run on this computer. Transactions are only sent to the Solana RPC for a dry run, like your wallet's own preview.</div>
   </div>
   <script src="popup.js"></script>
 </body>

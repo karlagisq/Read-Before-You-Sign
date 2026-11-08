@@ -1,4 +1,3 @@
-import { createHash } from "crypto";
 import { JUPITER_V6, RAYDIUM_AMM_V4, U64_MAX } from "./programs";
 
 /**
@@ -32,14 +31,13 @@ export interface SwapInfo {
   limit: bigint | null;
 }
 
-const anchorDisc = (name: string) =>
-  createHash("sha256").update(`global:${name}`).digest().subarray(0, 8).toString("hex");
-
+// Anchor discriminators = sha256("global:<instruction>")[0..8], precomputed so
+// this file also runs in the browser extension (no Node crypto).
 const JUPITER_IXS: Record<string, "exact-in" | "exact-out"> = {
-  [anchorDisc("route")]: "exact-in",
-  [anchorDisc("shared_accounts_route")]: "exact-in",
-  [anchorDisc("exact_out_route")]: "exact-out",
-  [anchorDisc("shared_accounts_exact_out_route")]: "exact-out",
+  e517cb977ae3ad2a: "exact-in", // route
+  c1209b3341d69c81: "exact-in", // shared_accounts_route
+  d033ef977b2bed5c: "exact-out", // exact_out_route
+  b0d169a89a7d453e: "exact-out", // shared_accounts_exact_out_route
 };
 
 const TAIL = 8 + 8 + 2 + 1;

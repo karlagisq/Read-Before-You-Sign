@@ -45,7 +45,9 @@ export default function Home() {
     <main className="page">
       <div className="hero">
         <h1>
-          Know what you sign, <span className="grad-text">before</span> you sign.
+          Know what you sign
+          <br />
+          <span className="grad-text">before</span> you sign.
         </h1>
         <p>
           Paste any Solana transaction to see what it really does, or install the extension to check every

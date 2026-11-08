@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
     const report = await analyze(transaction, {
       rpcUrl,
       registryRpcUrl: process.env.REGISTRY_RPC_URL ?? CLUSTERS.devnet,
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+      registryProgramId: process.env.REGISTRY_PROGRAM_ID,
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
     });
     return NextResponse.json({ ...report, cluster: CLUSTERS[cluster] ? cluster : "devnet" });
   } catch (e) {

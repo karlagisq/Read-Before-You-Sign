@@ -1,5 +1,6 @@
 "use client";
 import type { Report } from "@/lib/types";
+import { Advice, ProtectSwaps } from "@/components/Guidance";
 
 const LEVEL = {
   high: { icon: "!", title: "High risk", sub: "Don't sign this unless you're sure.", color: "var(--danger)" },
@@ -47,10 +48,15 @@ export function ReportView({ report }: { report: Report & { cluster?: string } }
               <div>
                 <div className="flag-title">{f.title}</div>
                 <div className="flag-detail">{f.detail}</div>
+                <Advice items={f.advice} open={f.severity === "danger"} />
               </div>
             </div>
           ))}
         </>
+      )}
+
+      {report.instructions.some((i) => i.type === "Swap") && (
+        <ProtectSwaps open={report.flags.some((f) => f.id.startsWith("sandwich") && f.severity !== "info")} />
       )}
 
       {report.explanationSource === "llm" && (

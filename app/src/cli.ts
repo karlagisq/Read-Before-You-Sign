@@ -26,6 +26,7 @@ import { createInterface } from "readline";
 import { Keypair } from "@solana/web3.js";
 import { analyze } from "./lib/analyze";
 import { SAMPLES, buildSample } from "./lib/samples";
+import { PROTECT_DISCLAIMER, PROTECT_SWAPS } from "./lib/guidance";
 import type { Report } from "./lib/types";
 
 const CLUSTERS: Record<string, string> = {
@@ -170,8 +171,24 @@ function render(r: Report, cluster: string, title?: string): string {
       if (i) lines.push("");
       lines.push(`${fg(s.c)(s.mark)} ${bold(f.title)}`);
       for (const l of wrap(f.detail, WIDTH - 8)) lines.push(`  ${muted(l)}`);
+      if (f.advice?.length && f.severity !== "info") {
+        lines.push(`  ${fg(THEME.accentA)("What you can do")}`);
+        for (const a of f.advice) wrap(a, WIDTH - 12).forEach((l, j) => lines.push(`  ${j ? "  " : fg(THEME.accentA)("→ ")}${l}`));
+      }
     });
     parts.push(box(lines, line, bold("What to watch")));
+  }
+
+  if (r.instructions.some((i) => i.type === "Swap")) {
+    const p: string[] = [];
+    PROTECT_SWAPS.forEach((st, i) => {
+      if (i) p.push("");
+      p.push(`${fg(THEME.accentA)(`${i + 1}.`)} ${bold(st.title)}`);
+      for (const l of wrap(st.detail, WIDTH - 10)) p.push(`   ${muted(l)}`);
+    });
+    p.push("");
+    for (const l of wrap(PROTECT_DISCLAIMER, WIDTH - 6)) p.push(faint(l));
+    parts.push(box(p, fg(THEME.accentA), bold("Protect your swaps from sandwich bots")));
   }
 
   // The template version just restates the findings, so only show AI wording.
@@ -280,6 +297,7 @@ async function main() {
   const opts = {
     rpcUrl,
     registryRpcUrl: process.env.REGISTRY_RPC_URL ?? CLUSTERS.devnet,
+    registryProgramId: process.env.REGISTRY_PROGRAM_ID,
     anthropicApiKey: ai ? process.env.ANTHROPIC_API_KEY : undefined,
   };
 

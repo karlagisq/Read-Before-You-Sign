@@ -20,3 +20,7 @@ test-ledger/
 *.log
 *.tsbuildinfo
 next-env.d.ts
+app/scripts/.buffer-shim.js
+
+# the extension ships its built analyzer so "Load unpacked" works from a clone
+!extension/dist/

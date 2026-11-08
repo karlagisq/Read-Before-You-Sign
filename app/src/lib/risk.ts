@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { U64_MAX } from "./programs";
 import { fmtPct } from "./swaps";
+import { adviceFor } from "./guidance";
 
 /**
  * Deterministic risk rules. The SCORE AND FLAGS COME FROM HERE, never from the
@@ -159,6 +160,8 @@ export function assess(
       detail: `The dry run errored (${sim.error}). Be cautious: the tool couldn't verify what it does.`,
     });
   }
+
+  for (const f of flags) f.advice = adviceFor(f);
 
   const score = Math.min(
     100,
